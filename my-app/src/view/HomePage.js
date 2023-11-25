@@ -8,9 +8,9 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
-
 import Pagination from '../components/Pagination'
 
+import moment from "moment"
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -39,6 +39,7 @@ const Item = styled(Paper)(({ theme }) => ({
 
 
 const HomePage = () => {
+  const PAGINATE_PER_PAGE = 15;
   const [topStories, setTopStories] = useState([])
   const [currentStories, setCurrentStories] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -54,61 +55,69 @@ const HomePage = () => {
     }
   };
   const getStoryByID = async (v) => {
-    const response = await fetch(`https://hacker-news.firebaseio.com/v0/item/${v}.json?printpretty`);
-    const dtl = await response.json();
-    return dtl
+    return (await fetch(`https://hacker-news.firebaseio.com/v0/item/${v}.json?printpretty`)).json();
+  }
+  const populateData = (data, pageNo)=>{
+    const startIndex = (pageNo-1)* PAGINATE_PER_PAGE
+    let topItems = JSON.parse(JSON.stringify(data)).slice(startIndex,PAGINATE_PER_PAGE*pageNo)
+    
+    let itemCalls = []
+    // console.log(topItems)
+    topItems.forEach(async (v)=>{
+      itemCalls.push(getStoryByID(v))
+    })
+
+    Promise.all(itemCalls).then(res=>{
+      // console.log(res)
+      setCurrentStories(res)
+    }).catch(err=>{
+      console.error(err)
+    })
+
+    setIsLoading(false)
+    
+  }
+
+
+  const updatePageNumber = (ev, pageNo) => {
+    populateData(topStories,pageNo)
   }
 
   useEffect(()=>{
     const fetchData = async () => {
       try {
         const stories = await getTopStories();
-        setTopStories(stories);
-      } catch (error) {
-        // Handle errors, e.g., display an error message
+        setTopStories(stories)
+        populateData(stories, 1)
+      } catch (err) {
+        console.error(err)
       }
     };
 
-    if (topStories.length > 0) {
-      let topItems = topStories.slice(0,15)
-
-      topItems.forEach(async (v)=>{
-        let story = await getStoryByID(v)
-        // console.log(story)
-        // console.log("\n------------------\n")
-        const updatedStories = currentStories.push(story)
-        setCurrentStories(prev=>[
-          ...prev,
-          story
-        ])
-
-        console.log(currentStories)
-      })
-
-      setIsLoading(false)
-      
-    }else{
-      fetchData();
+    if (!topStories.length) {
+      fetchData()
     }
-    
-
   },[topStories])
    
   return <div>
     <Box sx={{ flexGrow: 1 }}>
       <Grid container spacing={2}>
         
-        {
-          currentStories.length && currentStories.map(story => (
+         {
+          currentStories.map(story => (
             <Grid item xs={12} md={4} key={story.id}>
-              <Item>{story.title}</Item>
+              <Item>
+                {story.title}<br/>
+                {moment(story.time*1000).from(moment())}
+              </Item>
             </Grid>
           ))
         }
         
         {
-          topStories.length && <Grid item xs={12}>
-            <Pagination count={topStories.length}/>
+          <Grid item xs={12}>
+            <Pagination count={topStories.length ? Math.ceil(topStories.length/PAGINATE_PER_PAGE) : 0}
+              onChange={updatePageNumber}/>
           </Grid>
         }
         
