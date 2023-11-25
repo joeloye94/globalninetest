@@ -84,16 +84,16 @@ const HomePage = () => {
     return
   }
 
+  const fetchData = async () => {
+    try {
+      const stories = await getTopStories();
+      setTopStories(stories)
+      populateData(stories, 1)
+    } catch (err) {
+      console.error(err)
+    }
+  };
   useEffect(()=>{
-    const fetchData = async () => {
-      try {
-        const stories = await getTopStories();
-        setTopStories(stories)
-        populateData(stories, 1)
-      } catch (err) {
-        console.error(err)
-      }
-    };
 
     if (!topStories.length) {
       fetchData()
@@ -107,8 +107,11 @@ const HomePage = () => {
           padding:"0rem"
         }}>
           <Grid container spacing={0}>
-
-            {
+            {/**
+             * 
+             * title
+             * 
+             */
               <Grid item xs={12}>
                 <Card className={"customCard"}>
                   <Typography variant="h6" sx={{
@@ -143,8 +146,8 @@ const HomePage = () => {
                * content
                * 
                */
-              !isLoading && currentStories.map(story => (
-                <Grid item xs={12} key={story?.id}>
+              !isLoading && currentStories.map((story,k) => (
+                <Grid item xs={12} key={k}>
                   <Card className={"customCard"}>
                     <Grid container spacing={2} className={"newsItem"} onClick={(event)=>
                       _redirect(event, story?.id)
