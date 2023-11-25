@@ -5,6 +5,8 @@ import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+
+import { Skeleton } from '@mui/material';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
@@ -46,7 +48,7 @@ const HomePage = () => {
 
   const getTopStories = async () => {
     try {
-      const response = await fetch("https://hacker-news.firebaseio.com/v0/topstories.json");
+      const response = await fetch("https://hacker-news.firebaseio.com/v0/newstories.json");
       const stories = await response.json();
       return stories;
     } catch (error) {
