@@ -2,7 +2,7 @@ import * as React from 'react';
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 
-export default function BasicPagination({count, onChange}) {
+export default function BasicPagination({count, onChange, disabled}) {
   return (
     <Stack spacing={2} sx={
       {
@@ -12,7 +12,7 @@ export default function BasicPagination({count, onChange}) {
         alignItems:"center"
       }
     }>
-      <Pagination count={count} onChange={onChange} />
+      <Pagination count={count} onChange={onChange} disabled={disabled} />
       
     </Stack>
   );

@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { styled } from '@mui/material/styles';
 import Card from '@mui/material/Card';
-import CardActions from '@mui/material/CardActions';
-import CardContent from '@mui/material/CardContent';
-import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 
 import { Skeleton } from '@mui/material';
@@ -14,13 +11,9 @@ import Pagination from '../components/Pagination'
 
 import moment from "moment"
 
-const Item = styled(Paper)(({ theme }) => ({
-  backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
-  ...theme.typography.body2,
-  padding: theme.spacing(1),
-  textAlign: 'center',
-  color: theme.palette.text.secondary,
-}));
+import { useNavigate } from 'react-router-dom';
+
+
 
 /**
  * 
@@ -41,10 +34,12 @@ const Item = styled(Paper)(({ theme }) => ({
 
 
 const HomePage = () => {
-  const PAGINATE_PER_PAGE = 15;
+  const PAGINATE_PER_PAGE = 10;
   const [topStories, setTopStories] = useState([])
   const [currentStories, setCurrentStories] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+
+  const navigate = useNavigate();
 
   const getTopStories = async () => {
     try {
@@ -72,17 +67,21 @@ const HomePage = () => {
     Promise.all(itemCalls).then(res=>{
       // console.log(res)
       setCurrentStories(res)
+      setIsLoading(false)
     }).catch(err=>{
       console.error(err)
     })
-
-    setIsLoading(false)
     
   }
 
-
   const updatePageNumber = (ev, pageNo) => {
+    setIsLoading(true)
     populateData(topStories,pageNo)
+  }
+
+  const _redirect = (ev, id) => {
+    if(id) return navigate("/"+id)
+    return
   }
 
   useEffect(()=>{
@@ -100,33 +99,107 @@ const HomePage = () => {
       fetchData()
     }
   },[topStories])
-   
-  return <div>
-    <Box sx={{ flexGrow: 1 }}>
+    
+  return <Box className="holder" sx={{ flexGrow: 1 }} >
       <Grid container spacing={2}>
-        
-         {
-          currentStories.map(story => (
-            <Grid item xs={12} md={4} key={story.id}>
-              <Item>
-                {story.title}<br/>
-                {moment(story.time*1000).from(moment())}
-              </Item>
-            </Grid>
-          ))
-        }
-        
-        {
-          <Grid item xs={12}>
-            <Pagination count={topStories.length ? Math.ceil(topStories.length/PAGINATE_PER_PAGE) : 0}
-              onChange={updatePageNumber}/>
+        <Paper sx={{
+          width:"100%",
+          padding:"0rem"
+        }}>
+          <Grid container spacing={0}>
+
+            {
+              <Grid item xs={12}>
+                <Card className={"customCard"}>
+                  <Typography variant="h6" sx={{
+                    fontWeight:700,
+                    padding:"1rem 1.5rem",
+                    textAlign:"left"
+                  }} gutterBottom>
+                    News
+                  </Typography>
+                </Card>
+              </Grid>
+              
+            }
+            
+            {
+              /**
+               * 
+               * skeleton
+               * 
+               */
+              isLoading && <Grid item xs={12}>
+                <Skeleton sx={{margin:"1rem"}} variant="rounded" width={"65%"} height={25} />
+                <Skeleton sx={{margin:"1rem"}} variant="rounded" width={"50%"} height={25} />
+                <Skeleton sx={{margin:"1rem"}} variant="rounded" width={"75%"} height={25} />
+                
+              </Grid>
+            }
+
+            {
+              /**
+               * 
+               * content
+               * 
+               */
+              !isLoading && currentStories.map(story => (
+                <Grid item xs={12} key={story?.id}>
+                  <Card className={"customCard"}>
+                    <Grid container spacing={2} className={"newsItem"} onClick={(event)=>
+                      _redirect(event, story?.id)
+                    }>
+                      <Grid item xs={12} md={8} className={"newsItem__content"}>
+                        <div className={"content"}>
+
+                          <Typography variant="h5" gutterBottom>
+                            {story?.title || "null"}
+                          </Typography>
+                          <Typography variant="subtitle1" gutterBottom>
+                            {`${story?.score} points by ${story?.by}`}
+                          </Typography>
+                          <Typography variant="caption" display="block" gutterBottom className={"link"} onClick={(ev)=>{
+                            ev.stopPropagation()
+                            if(story?.url) window.open(story.url)
+                            return
+                          }}>
+                            {story?.url || ""}
+                          </Typography>
+                        </div>
+
+                        <Typography className={"fromNow"} variant="overline" gutterBottom>
+                          {moment(story.time*1000).from(moment())}
+                        </Typography>
+                        
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <div className={"newsItem__img"}>
+
+                        </div>
+                        
+                      </Grid>
+                    </Grid>
+                    
+                  </Card>
+                </Grid>
+              ))
+            }
+            
+            {
+              /**
+               * 
+               * pagination
+               * 
+               */
+              <Grid item xs={12}>
+                <Pagination disabled={isLoading} count={topStories.length ? Math.ceil(topStories.length/PAGINATE_PER_PAGE) : 0}
+                  onChange={updatePageNumber}/>
+              </Grid>
+            }
           </Grid>
-        }
-        
+        </Paper>
       </Grid>
     </Box>
-    
-  </div>;
 };
 
 export default HomePage;
