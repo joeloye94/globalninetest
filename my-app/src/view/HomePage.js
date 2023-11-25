@@ -1,13 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import Box from '@mui/material/Box';
+import { styled } from '@mui/material/styles';
 import Card from '@mui/material/Card';
 import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Grid from '@mui/material/Grid';
 
 import Pagination from '../components/Pagination'
 
+
+const Item = styled(Paper)(({ theme }) => ({
+  backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
+  ...theme.typography.body2,
+  padding: theme.spacing(1),
+  textAlign: 'center',
+  color: theme.palette.text.secondary,
+}));
 
 /**
  * 
@@ -29,7 +40,9 @@ import Pagination from '../components/Pagination'
 
 const HomePage = () => {
   const [topStories, setTopStories] = useState([])
-  
+  const [currentStories, setCurrentStories] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+
   const getTopStories = async () => {
     try {
       const response = await fetch("https://hacker-news.firebaseio.com/v0/topstories.json");
@@ -61,20 +74,47 @@ const HomePage = () => {
 
       topItems.forEach(async (v)=>{
         let story = await getStoryByID(v)
-        console.log(story)
-        console.log("\n------------------\n")
+        // console.log(story)
+        // console.log("\n------------------\n")
+        const updatedStories = currentStories.push(story)
+        setCurrentStories(prev=>[
+          ...prev,
+          story
+        ])
+
+        console.log(currentStories)
       })
+
+      setIsLoading(false)
+      
     }else{
       fetchData();
     }
-    console.log(topStories)
+    
 
   },[topStories])
    
   return <div>
-    {
-      topStories.length && <Pagination count={topStories.length}/>
-    }
+    <Box sx={{ flexGrow: 1 }}>
+      <Grid container spacing={2}>
+        
+        {
+          currentStories.length && currentStories.map(story => (
+            <Grid item xs={12} md={4} key={story.id}>
+              <Item>{story.title}</Item>
+            </Grid>
+          ))
+        }
+        
+        {
+          topStories.length && <Grid item xs={12}>
+            <Pagination count={topStories.length}/>
+          </Grid>
+        }
+        
+      </Grid>
+    </Box>
+    
   </div>;
 };
 
