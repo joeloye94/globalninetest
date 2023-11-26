@@ -57,7 +57,14 @@ body{
   border-radius:0!important;
   border-bottom:var(--border-bottom);
 }
-
+.commentsCard{
+  border-radius:18px!important;
+  padding:1.5rem;
+  margin-bottom:1rem;
+}
+.commentsHolderCard{
+  background-color: #282c34;
+}
 .holder{
   margin:4rem;
 }
@@ -106,22 +113,31 @@ body{
   margin-bottom:3rem
 }
 
-
+.comment{
+  background-color: var(--hover);
+}
 .comment >div{
   text-align: left;
-  margin:1.5rem;
-  padding-bottom:1.5rem;
-  border-bottom:var(--border-bottom)
+  margin:1.5rem 1.5rem 2rem;
+  /* padding-bottom:1.5rem; */
+  /* border-bottom:var(--border-bottom) */
 }
 .comment:last-child >div{
   border-bottom:none;
 }
-.comment >div .userDetails{
-  display:flex;
-  justify-content: space-between;
-  margin-bottom:2rem;
+.comment .userDetails{
+  margin-bottom:0.75rem;
 }
 
+.childComment{
+  margin-left:3rem;
+}
+.childComment > .userDetails{
+  margin:1.5rem 0 0.5rem!important;
+}
+.childComment__comment,.comment__comment{
+  font-size:0.9rem;
+}
 @media screen and (max-width:899px){
   .holder{
     margin:4rem 1rem;

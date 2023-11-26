@@ -52,8 +52,6 @@ const DetailsPage = () => {
       try{
         setStory(dtl)
         await populateComments(dtl).then(res=>{
-
-          console.log(comments)
           console.log("all comments loaded")
           setIsLoading(false)
         }).catch(err=>{
@@ -66,67 +64,78 @@ const DetailsPage = () => {
       
     })
   }
+  /**
+   * 
+   * load first level comments attempt
+   * 
+   */
+  //load parent child comment (root level)
   const populateComments = async (dtl) => {
-    return new Promise(async (res,rej)=>{
-      try{
-        // console.log(dtl)
-        //if there are comments found
-        if(dtl?.kids?.length){
-          let itemCalls = []
-          dtl.kids.forEach(async (v)=>{
-            itemCalls.push(getFetchIDEndpoint(v))
-          })
-          
-          if(itemCalls.length){
-            //load parent level
-            Promise.all(itemCalls).then(async itemCallRes=>{
-              //load child level
-              itemCallRes.forEach(async itemCallResItem=>{
-                //load first level
-                setComments(prev=>{
-                  const updateChildJSON = {
-                    ...itemCallResItem,
-                  }
-                  
-                  return [
-                    ...prev,
-                    updateChildJSON
-                  ]
-                })
+    try {
+      const cmts = []
+      if (dtl?.kids?.length) {
+        let itemCalls = dtl.kids.map((v) => getFetchIDEndpoint(v));
+        
+        if (itemCalls.length) {
+          // Load parent level
+          const itemCallRes = (await Promise.all(itemCalls)).sort((a,b)=>
+            moment(a.time*1000) - moment(b.time*1000)
+          );
+  
+          // Load child level comments
+          for (const itemCallResItem of itemCallRes) {
 
-                // if to load child level comments
-                // await populateComments(itemCallResItem).then(childRes=>{
+            /**
+             * 
+             * load all comments attempt
+             * 
+             */
+            // const kidComments = itemCallResItem?.kids
+            // if(kidComments?.length){
+            //   const kidItemsCall = kidComments.map((v) => getFetchIDEndpoint(v));
+            //   const kidItemsCallRes = await Promise.all(kidItemsCall);
 
-                //   console.log("all child comments loaded")
-                //   res(true)
-                // }).catch(err=>{
-                //   console.error(err)
-                //   rej(err)
-                // })
-              })
-              res(true)
-              
-              
-            }).catch(err=>{
-              console.error(err)
-              rej(err)
-            })
-          }else{
-            //if there are child comments
-            console.log("kid has no child comments")
-            res(true)
+            //   itemCallResItem.kidsDetails = kidItemsCallRes
+
+            // }
+            // cmts.push(itemCallResItem)
+
+
+            /**
+             * 
+             * load first level comments
+             * 
+             */
+            const kidComments = itemCallResItem?.kids
+            if(kidComments?.length){
+              const kidItemsCall = kidComments.map((v) => getFetchIDEndpoint(v));
+              const kidItemsCallRes = await Promise.all(kidItemsCall);
+
+              itemCallResItem.kidsDetails = kidItemsCallRes.sort((a,b)=>
+                moment(a.time*1000) - moment(b.time*1000)
+              )
+
+            }
+            cmts.push(itemCallResItem)
+            
           }
-        }else{
-          //if there are no comments
-          console.log("no kid comments")
-          res(true)
+        } else {
+          //if there are no child comments
+          console.log("kid has no child comments");
         }
-      }catch(err){
-        console.error(err)
-        throw err
+      } else {
+        // If there are no comments
+        console.log("no kid comments");
       }
-    })
-  }
+  
+      setComments(cmts)
+      console.log(cmts)
+      return true;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
   
   
   useEffect(()=>{
@@ -274,25 +283,47 @@ const DetailsPage = () => {
                */
               !isLoading && 
                 <Grid item xs={12}>
-                  <Card className={"customCard"}>
+                  <Card className={"customCard commentsHolderCard"}>
                     <Grid container spacing={0}>
                       {
                         comments.length ? comments.map((c,k)=>
                           <Grid item xs={12} key={k} className="comment" >
-                            <div >
-                              <div className="userDetails">
-                                <Typography variant="overline" gutterBottom>
-                                  <PersonIcon className="vertical-align" sx={{
-                                    marginRight:2
-                                  }}></PersonIcon>
-                                  <span className="vertical-align">{c.by}</span>
-                                </Typography>
+                            <div>
+                              <Card className={"commentsCard"}>
+                                <div className="userDetails">
+                                  <Typography variant="overline" gutterBottom>
+                                    <PersonIcon className="vertical-align" sx={{
+                                      marginRight:2
+                                    }}></PersonIcon>
+                                    <Typography variant="overline" gutterBottom>
+                                      <span className="vertical-align">{c.by} | {moment(c.time*1000).from(moment())}</span>
+                                    </Typography>
+                                  </Typography>
 
-                                <Typography className={"fromNow"} variant="overline" gutterBottom>
-                                  {moment(c.time*1000).from(moment())}
-                                </Typography>
-                              </div>
-                              <div dangerouslySetInnerHTML={{ __html: c.text }}></div>
+                                </div>
+                                <div className="comment__comment" dangerouslySetInnerHTML={{ __html: c.text }}></div>
+                              </Card>
+                              
+
+                              {
+                                c?.kidsDetails?.length ? c.kidsDetails.map((_c,_k)=>
+                                <div className="childComment" key={_k}>
+                                  <Card className={"commentsCard"}>
+                                    <div className="userDetails">
+                                      <PersonIcon className="vertical-align" sx={{
+                                        marginRight:2
+                                      }}></PersonIcon>
+                                      <Typography variant="overline" gutterBottom>
+                                        <span className="vertical-align">{_c.by} | {moment(_c.time*1000).from(moment())}</span>
+                                      </Typography>
+
+                                    </div>
+                                    <div className="childComment__comment" dangerouslySetInnerHTML={{ __html: _c.text }}></div>
+                                  </Card>
+                                  
+                                </div>
+                                ) : ""
+                              }
                             </div>
 
                           </Grid>
